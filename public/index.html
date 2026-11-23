@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
+<meta name="theme-color" content="#091017">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<title>vaho · vidrio ciego</title>
+<link rel="stylesheet" href="ui.css">
+<style>
+  html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    overflow: hidden;
+    background: #091017;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Vista de acceso inicial */
+  #join {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    z-index: 20;
+    background: radial-gradient(circle at 50% 30%, #15222e 0%, #091017 80%);
+  }
+  .card-join {
+    width: 100%; max-width: 340px;
+    padding: 32px 24px;
+    border-radius: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+    text-align: center;
+  }
+  .title-vaho {
+    font-size: 52px; line-height: 1; margin: 0;
+    color: var(--vaho);
+    letter-spacing: -0.02em;
+  }
+  .sub-vaho {
+    font-size: 16px; color: var(--mut); margin-top: -4px; margin-bottom: 8px;
+  }
+  .field {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+  }
+  .field label {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mut);
+  }
+  .card-join input {
+    background: rgba(9, 16, 23, 0.7);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .card-join button#go {
+    margin-top: 8px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .hint-note {
+    font-size: 11px; color: var(--mut); line-height: 1.45;
+  }
+
+  /* Pantalla interactiva: Vidrio Ciego */
+  #blindGlass {
+    display: none;
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+  }
+  #cvFog {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+
+  /* Barra superior minimalista */
+  #topBar {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    left: 14px; right: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    pointer-events: none;
+    z-index: 15;
+  }
+  .room-pill {
+    pointer-events: auto;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(9, 16, 23, 0.7);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .brand-text {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    color: var(--vaho);
+  }
+
+  /* Botones de sensores flotantes */
+  #sensorBar {
+    position: absolute;
+    bottom: max(44px, calc(env(safe-area-inset-bottom) + 38px));
+    left: 0; right: 0;
+    display: flex; justify-content: center; gap: 12px;
+    z-index: 15;
+    pointer-events: none;
+  }
+  .mod-btn {
+    pointer-events: auto;
+    min-height: 40px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .mod-btn.active {
+    background: rgba(255, 169, 90, 0.18);
+    border-color: var(--brasa);
+    color: var(--brasa);
+    box-shadow: 0 0 12px var(--brasa-glow);
+  }
+
+  /* Línea de estado inferior de calidad */
+  #qualityBar {
+    position: absolute;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 12px; right: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--mut);
+    pointer-events: none;
+    z-index: 15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Mensaje sutil de toque */
+  #touchCue {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    color: rgba(207, 221, 227, 0.35);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 22px;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    text-align: center;
+    padding: 0 24px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Acceso / Unión a sala -->
+  <div id="join">
+    <div class="card-join glass-panel">
+      <h1 class="title-vaho serif">vaho</h1>
+      <div class="sub-vaho serif-italic">el teléfono como vidrio empañado</div>
+      
+      <div class="field">
+        <label for="sala">Código de sala</label>
+        <input id="sala" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="24" placeholder="ej: abc123">
+      </div>
+
+      <div class="field">
+        <label for="name">Dispositivo (opcional)</label>
+        <input id="name" autocomplete="off" autocapitalize="off" maxlength="16" placeholder="móvil">
+      </div>
+
+      <button id="go" class="primary">Tocar el vidrio</button>
+      <div id="err" style="color:var(--warn); font-size:12px; min-height:16px;"></div>
+      <div class="hint-note">Al tocar la pantalla se despejará el vaho en el computador. Puedes mover o inclinar el teléfono.</div>
+    </div>
+  </div>
+
+  <!-- Vidrio Ciego (Superficie táctil y niebla) -->
+  <div id="blindGlass">
+    <canvas id="cvFog"></canvas>
+    
+    <div id="topBar">
+      <div class="room-pill">
+        <span id="stDot" class="status-dot"></span>
+        <span id="stText">conectando</span> · <span id="roomCode"></span>
+      </div>
+      <div class="brand-text">vaho</div>
+    </div>
+
+    <div id="touchCue">toca el vidrio para despejar</div>
+
+    <div id="sensorBar">
+      <button id="btnMotion" class="mod-btn glass-panel" aria-pressed="false">Giro</button>
+      <button id="btnMic" class="mod-btn glass-panel" aria-pressed="false">Soplar</button>
+    </div>
+
+    <div id="qualityBar">presión: detectando… · diámetro: detectando…</div>
+  </div>
+
+<script src="config.js"></script>
+<script src="tacto.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch {} return null; };
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const r2 = v => Math.round(v * 100) / 100;
+const r3 = v => Math.round(v * 1000) / 1000;
+
+const Q = new URLSearchParams(location.search);
+$('#name').value = ls('vaho.name') || 'móvil';
+$('#sala').value = Tacto.clean(Q.get('sala')) || Tacto.clean(ls('tacto.sala')) || '';
+
+let client = null, base = '', name = '', sala = '';
+const dev = ls('vaho.dev') || (ls('vaho.dev', Tacto.rand(6)), ls('vaho.dev'));
+const pub = (kind, obj, qos = 0, retain = false) => client && client.connected && client.publish(`${base}/${kind}`, JSON.stringify(obj), { qos, retain });
+
+// ---------- Detección de calidad de presión y diámetro ----------
+const S = { f: { min: 99, max: -1, n: 0 }, d: { min: 9999, max: -1, n: 0 } };
+const quality = (s, eps) => (!s.n ? 'sin dato' : s.max <= 0 ? 'sin dato' : s.n > 20 && s.max - s.min < eps ? 'constante' : 'variable');
+const caps = () => ({ presion: quality(S.f, 0.03), diametro: quality(S.d, 1.5), tacto: 'ontouchstart' in window ? 'touch' : 'puntero' });
+let lastCaps = '';
+
+function updateQualityHud() {
+  const c = caps();
+  $('#qualityBar').textContent = `presión: ${c.presion} · diámetro: ${c.diametro} · dedos: ${curTouches.length}`;
+}
+
+function publishStatus() {
+  pub('status', {
+    online: true,
+    name,
+    caps: { ...caps(), motion: motionOn, mic: !!micStream }
+  }, 1, true);
+}
+
+// ---------- Conexión MQTT ----------
+async function connectMqtt() {
+  base = `tacto/${sala}/${dev}`;
+  const will = { topic: `${base}/status`, payload: JSON.stringify({ online: false, name }), qos: 1, retain: true };
+  const o = await Tacto.open({ clientId: 'vaho-tel-' + dev, will });
+  client = o.client;
+  $('#roomCode').textContent = sala;
+
+  client.on('connect', () => {
+    $('#stDot').className = 'status-dot online';
+    $('#stText').textContent = 'conectado';
+    client.subscribe(`${base}/cmd`);
+    publishStatus();
+  });
+  client.on('reconnect', () => {
+    $('#stDot').className = 'status-dot warn';
+    $('#stText').textContent = 'reconectando';
+  });
+  client.on('offline', () => {
+    $('#stDot').className = 'status-dot';
+    $('#stText').textContent = 'sin conexión';
+  });
+  client.on('message', (topic, payload) => {
+    try {
+      const m = JSON.parse(payload.toString());
+      // Comando de vibración al soltar gota en la experiencia (Android soporta vibrate)
+      if (m.vib != null && navigator.vibrate) {
+        navigator.vibrate(m.vib || 40);
+      }
+      if (m.ping != null) {
+        pub('pong', { t: m.ping });
+      }
+    } catch {}
+  });
+}
+
+// ---------- Canvas de Vidrio Ciego y Trazo de Niebla ----------
+const cv = $('#cvFog'), ctx = cv.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+let trails = []; // Puntos trazados recientemente sobre la niebla
+
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+// Renderizado del "vidrio ciego": niebla densa y trazos despejados que vuelven a empañarse
+function renderBlindGlass() {
+  // Fondo de vidrio empañado con sutil gradiente
+  ctx.fillStyle = '#091017';
+  ctx.fillRect(0, 0, W, H);
+
+  // Velo lechoso de vaho
+  const fogGrad = ctx.createRadialGradient(W / 2, H / 2, 50, W / 2, H / 2, Math.max(W, H));
+  fogGrad.addColorStop(0, 'rgba(207, 221, 227, 0.22)');
+  fogGrad.addColorStop(1, 'rgba(207, 221, 227, 0.12)');
+  ctx.fillStyle = fogGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Microgotas estáticas de textura en el vidrio
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  for (let y = 30; y < H; y += 42) {
+    for (let x = 30; x < W; x += 42) {
+      ctx.beginPath();
+      ctx.arc(x + ((y * 13) % 20), y, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Dibujar y desvanecer trazos dejados por los dedos
+  const now = performance.now();
+  for (let i = trails.length - 1; i >= 0; i--) {
+    const p = trails[i];
+    const age = (now - p.t) / 1000;
+    if (age > 2.5) {
+      trails.splice(i, 1);
+      continue;
+    }
+    const alpha = Math.max(0, 1 - age / 2.5);
+    const rad = p.r * (1 + age * 0.3);
+
+    // Trazo despejado (cálido y transparente)
+    const g = ctx.createRadialGradient(p.x, p.y, rad * 0.2, p.x, p.y, rad);
+    g.addColorStop(0, `rgba(255, 169, 90, ${0.35 * alpha})`);
+    g.addColorStop(0.7, `rgba(207, 221, 227, ${0.2 * alpha})`);
+    g.addColorStop(1, 'rgba(9, 16, 23, 0)');
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Destello inmediato de los dedos actualmente apoyados
+  for (const t of curTouches) {
+    const rad = Math.max(28, t.d / 2);
+    // Anillo exterior de condensación
+    ctx.strokeStyle = 'rgba(233, 241, 243, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(t.x * W, t.y * H, rad, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Centro despejado
+    const g = ctx.createRadialGradient(t.x * W, t.y * H, 4, t.x * W, t.y * H, rad);
+    g.addColorStop(0, 'rgba(255, 169, 90, 0.45)');
+    g.addColorStop(1, 'rgba(207, 221, 227, 0.05)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(t.x * W, t.y * H, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  requestAnimationFrame(renderBlindGlass);
+}
+
+// ---------- Gestión de toques táctiles ----------
+let curTouches = [], lastN = 0, queued = false;
+const slots = new Map();
+
+function slotFor(id) {
+  if (slots.has(id)) return slots.get(id);
+  const used = new Set(slots.values());
+  for (let s = 1; s <= 5; s++) if (!used.has(s)) { slots.set(id, s); return s; }
+  return null;
+}
+
+function handleTouch(e) {
+  e.preventDefault();
+  const list = Array.from(e.targetTouches);
+  const ids = new Set(list.map(t => t.identifier));
+  for (const id of [...slots.keys()]) if (!ids.has(id)) slots.delete(id);
+
+  const p = [];
+  const now = performance.now();
+  for (const t of list) {
+    const i = slotFor(t.identifier);
+    if (!i) continue;
+    const rx = t.radiusX ?? t.webkitRadiusX ?? 0;
+    const ry = t.radiusY ?? t.webkitRadiusY ?? 0;
+    const d = (rx + ry > 0) ? (rx + ry) : 40;
+    const force = t.force ?? t.webkitForce ?? 0;
+
+    const normX = clamp(t.clientX / W);
+    const normY = clamp(t.clientY / H);
+
+    p.push({ i, x: normX, y: normY, f: force, d });
+
+    // Guardar para rastro visual en el vidrio ciego
+    trails.push({ x: t.clientX, y: t.clientY, r: Math.max(24, d / 2), t: now });
+
+    // Estadísticas para estimar calidad de presión y diámetro
+    S.f.n++; S.f.min = Math.min(S.f.min, force); S.f.max = Math.max(S.f.max, force);
+    S.d.n++; S.d.min = Math.min(S.d.min, d); S.d.max = Math.max(S.d.max, d);
+  }
+
+  curTouches = p.sort((a, b) => a.i - b.i);
+  if (p.length) $('#touchCue').style.opacity = '0';
+  updateQualityHud();
+
+  if (curTouches.length !== lastN) {
+    lastN = curTouches.length;
+    sendTouch(1);
+  } else if (!queued) {
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      sendTouch(0);
+    });
+  }
+}
+
+const sendTouch = qos => {
+  const ar = r3(W / (H || 1));
+  pub('touch', {
+    t: Date.now(),
+    n: curTouches.length,
+    ar,
+    p: curTouches.map(z => ({
+      i: z.i,
+      x: r3(z.x),
+      y: r3(z.y),
+      f: r3(z.f),
+      d: Math.round(z.d)
+    }))
+  }, qos);
+};
+
+// Eventos de puntero / ratón para soporte en computador
+const ptrs = new Map();
+function updatePtrs() {
+  const p = [];
+  let i = 0;
+  const now = performance.now();
+  for (const e of ptrs.values()) {
+    if (++i > 5) break;
+    const d = Math.max(e.width || 0, e.height || 0, 36);
+    const normX = clamp(e.clientX / W);
+    const normY = clamp(e.clientY / H);
+    p.push({ i, x: normX, y: normY, f: e.pressure || 0.5, d });
+    trails.push({ x: e.clientX, y: e.clientY, r: d / 2, t: now });
+  }
+  curTouches = p;
+  if (p.length) $('#touchCue').style.opacity = '0';
+  updateQualityHud();
+  sendTouch(0);
+}
+
+cv.addEventListener('touchstart', handleTouch, { passive: false });
+cv.addEventListener('touchmove', handleTouch, { passive: false });
+cv.addEventListener('touchend', handleTouch, { passive: false });
+cv.addEventListener('touchcancel', handleTouch, { passive: false });
+
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch') return;
+  cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, e);
+  updatePtrs();
+});
+cv.addEventListener('pointermove', e => {
+  if (ptrs.has(e.pointerId)) {
+    ptrs.set(e.pointerId, e);
+    updatePtrs();
+  }
+});
+const endPtr = e => {
+  if (ptrs.delete(e.pointerId)) updatePtrs();
+};
+cv.addEventListener('pointerup', endPtr);
+cv.addEventListener('pointercancel', endPtr);
+
+// Periódicamente verificar cambios en calidad de capacidades
+setInterval(() => {
+  const k = JSON.stringify(caps());
+  if (k !== lastCaps) {
+    lastCaps = k;
+    publishStatus();
+    updateQualityHud();
+  }
+}, 800);
+
+// ---------- Sensor de Giro (DeviceOrientation & DeviceMotion) ----------
+let motionOn = false, boundMotion = false, ang = null, rot = null, acc = null, mdirty = false;
+
+async function askMotionPermission() {
+  for (const R of [window.DeviceMotionEvent, window.DeviceOrientationEvent]) {
+    if (R && typeof R.requestPermission === 'function') {
+      const r = await R.requestPermission();
+      if (r !== 'granted') throw new Error('Permiso de movimiento no concedido.');
+    }
+  }
+}
+
+function bindMotionEvents() {
+  if (boundMotion) return;
+  boundMotion = true;
+  window.addEventListener('deviceorientation', e => {
+    ang = [e.alpha || 0, e.beta || 0, e.gamma || 0];
+    mdirty = true;
+  });
+  window.addEventListener('devicemotion', e => {
+    const r = e.rotationRate, a = e.accelerationIncludingGravity;
+    if (r) rot = [r.beta || 0, r.gamma || 0, r.alpha || 0];
+    if (a) acc = [a.x || 0, a.y || 0, a.z || 0];
+    mdirty = true;
+  });
+  setInterval(() => {
+    if (!motionOn || !mdirty) return;
+    mdirty = false;
+    pub('motion', {
+      t: Date.now(),
+      a: ang && ang.map(r2),
+      r: rot && rot.map(r2),
+      c: acc && acc.map(r2)
+    });
+  }, 33);
+}
+
+$('#btnMotion').onclick = async () => {
+  try {
+    if (!motionOn) {
+      await askMotionPermission();
+      bindMotionEvents();
+      motionOn = true;
+      $('#btnMotion').classList.add('active');
+      $('#btnMotion').setAttribute('aria-pressed', 'true');
+    } else {
+      motionOn = false;
+      $('#btnMotion').classList.remove('active');
+      $('#btnMotion').setAttribute('aria-pressed', 'false');
+    }
+    publishStatus();
+  } catch (err) {
+    alert(err.message || err);
+  }
+};
+
+// ---------- Sensor de Soplido (Micrófono con línea base adaptativa) ----------
+let micStream = null, micCtx = null, micTimer = null;
+let baselineRms = 0.01;
+
+async function startMic() {
+  micStream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+  });
+  micCtx = new (window.AudioContext || window.webkitAudioContext)();
+  await micCtx.resume();
+  const an = micCtx.createAnalyser();
+  an.fftSize = 512;
+  micCtx.createMediaStreamSource(micStream).connect(an);
+
+  const timeBuf = new Float32Array(an.fftSize);
+  const freqBuf = new Uint8Array(an.frequencyBinCount);
+  const hzPerBin = micCtx.sampleRate / an.fftSize;
+
+  const band = (lowHz, highHz) => {
+    let s = 0, n = 0;
+    const start = Math.max(1, Math.floor(lowHz / hzPerBin));
+    const end = Math.min(freqBuf.length, Math.ceil(highHz / hzPerBin));
+    for (let i = start; i < end; i++) { s += freqBuf[i]; n++; }
+    return n ? (s / n) / 255 : 0;
+  };
+
+  micTimer = setInterval(() => {
+    an.getFloatTimeDomainData(timeBuf);
+    let sumSq = 0;
+    for (let i = 0; i < timeBuf.length; i++) sumSq += timeBuf[i] * timeBuf[i];
+    const rawRms = Math.sqrt(sumSq / timeBuf.length);
+
+    // Adaptar línea base del ruido ambiental suavemente
+    baselineRms = baselineRms * 0.96 + rawRms * 0.04;
+    const diff = Math.max(0, rawRms - baselineRms);
+    const level = clamp(diff * 5.0, 0, 1);
+
+    an.getByteFrequencyData(freqBuf);
+    pub('mic', {
+      t: Date.now(),
+      l: r3(level),
+      b: [r3(band(60, 400)), r3(band(400, 2200)), r3(band(2200, 7000))]
+    });
+  }, 50);
+}
+
+function stopMic() {
+  clearInterval(micTimer);
+  micStream?.getTracks().forEach(t => t.stop());
+  micCtx?.close();
+  micStream = micCtx = null;
+}
+
+$('#btnMic').onclick = async () => {
+  try {
+    if (!micStream) {
+      await startMic();
+      $('#btnMic').classList.add('active');
+      $('#btnMic').setAttribute('aria-pressed', 'true');
+    } else {
+      stopMic();
+      $('#btnMic').classList.remove('active');
+      $('#btnMic').setAttribute('aria-pressed', 'false');
+    }
+    publishStatus();
+  } catch (err) {
+    alert('No se pudo acceder al micrófono: ' + (err.message || err));
+  }
+};
+
+// ---------- Inicio / WakeLock ----------
+async function keepAwake() {
+  try { await navigator.wakeLock?.request('screen'); } catch {}
+}
+
+$('#go').onclick = async () => {
+  name = $('#name').value.trim() || 'móvil';
+  sala = Tacto.clean($('#sala').value);
+  if (sala.length < 4) {
+    $('#err').textContent = 'Escribe la sala que muestra la pantalla (mínimo 4 letras).';
+    return;
+  }
+  ls('vaho.name', name);
+  ls('tacto.sala', sala);
+
+  // Intentar permiso de giro al hacer clic
+  try {
+    await askMotionPermission();
+    bindMotionEvents();
+    motionOn = true;
+    $('#btnMotion').classList.add('active');
+    $('#btnMotion').setAttribute('aria-pressed', 'true');
+  } catch {}
+
+  $('#join').style.display = 'none';
+  $('#blindGlass').style.display = 'block';
+  resizeCanvas();
+  renderBlindGlass();
+  keepAwake();
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && keepAwake());
+
+  connectMqtt().catch(err => {
+    $('#stText').textContent = 'error al conectar';
+    alert('Error MQTT: ' + (err.message || err));
+  });
+};
+
+// Si viene la sala en la URL y ya se había usado, preparar entrada rápida
+if (Q.get('sala')) {
+  $('#sala').value = Tacto.clean(Q.get('sala'));
+}
+</script>
+</body>
+</html>

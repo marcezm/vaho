@@ -1,0 +1,143 @@
+/* vaho · estilos compartidos (teléfono y experiencia)
+ * Tipografías: Instrument Serif & DM Mono
+ * Paleta: noche azul-gris #091017, vaho #cfdde3, texto #e9f1f3, brasa #ffa95a
+ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+:root {
+  color-scheme: dark;
+  --bg: #091017;
+  --bg-trans: rgba(9, 16, 23, 0.82);
+  --vaho: #cfdde3;
+  --fg: #e9f1f3;
+  --mut: #8b9ea7;
+  --brasa: #ffa95a;
+  --brasa-glow: rgba(255, 169, 90, 0.28);
+  --line: rgba(207, 221, 227, 0.12);
+  --line-strong: rgba(207, 221, 227, 0.28);
+  --glass: rgba(13, 22, 31, 0.75);
+  --glass-card: rgba(16, 27, 38, 0.65);
+  --ok: #7ae7b9;
+  --warn: #ffb86b;
+
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'DM Mono', ui-monospace, Menlo, Consolas, monospace;
+  --ease: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tipografía de títulos y texto poético */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Paneles de vidrio oscuro translúcido */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Botones minimalistas */
+button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  background: rgba(207, 221, 227, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all var(--ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button:hover {
+  background: rgba(207, 221, 227, 0.14);
+  border-color: var(--line-strong);
+  color: #fff;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button.primary {
+  background: rgba(255, 169, 90, 0.15);
+  border-color: rgba(255, 169, 90, 0.4);
+  color: var(--brasa);
+}
+
+button.primary:hover {
+  background: rgba(255, 169, 90, 0.28);
+  border-color: var(--brasa);
+  box-shadow: 0 0 16px var(--brasa-glow);
+}
+
+input, select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg);
+  background: rgba(9, 16, 23, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color var(--ease);
+}
+
+input:focus, select:focus {
+  border-color: var(--vaho);
+}
+
+/* Estado de conexión */
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mut);
+  transition: background-color var(--ease);
+}
+.status-dot.online {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+.status-dot.warn {
+  background: var(--warn);
+}

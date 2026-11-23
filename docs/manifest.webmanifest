@@ -1,0 +1,10 @@
+{
+  "name": "vaho",
+  "short_name": "vaho",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#091017",
+  "theme_color": "#091017",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
