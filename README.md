@@ -122,17 +122,3 @@ A pesar de la fidelidad del mapeo multisensorial, existen dimensiones hápticas 
 ### Dos mejoras concretas para futuras versiones
 1. **Síntesis háptica granular en tiempo real (Continuous Vibration Synthesis):** En lugar de limitar la vibración a pulsos discretos al desprenderse una gota, emplear la *Web Vibrations API* o motores hápticos dedicados para sintetizar en tiempo real micro-ráfagas de vibración acústica sincronizadas con la velocidad del chirrido. Esto crearía la ilusión táctil de fricción y rugosidad directamente bajo la yema del dedo.
 2. **Simulación hidrodinámica bidimensional de condensación (Navier-Stokes en GPU):** Implementar en WebGL/WebGPU un campo de difusión de humedad con tensión superficial y capilaridad. Esto permitiría que las gotas no solo caigan verticalmente, sino que absorban micro-gotas vecinas a su paso, se bifurquen según las imperfecciones del vidrio y dejen rastros de vapor con evaporación no uniforme.
-
----
-
-## 4. Registro de Pruebas con Dispositivo Real
-
-Completa los siguientes campos al conectar tu teléfono físico a la experiencia:
-
-- **Modelo y sistema operativo del teléfono:** `[COMPLETAR: ej. iPhone 15 Pro iOS 17.5 / Samsung Galaxy S23 Android 14]`
-- **Calidad de presión detectada (`touch.f`):** `[COMPLETAR: variable / constante / sin dato]`
-- **Calidad de diámetro detectada (`touch.d`):** `[COMPLETAR: variable / constante / sin dato · valor aprox. en px]`
-- **Máximo de dedos soportados simultáneamente:** `[COMPLETAR: ej. 5 dedos / 10 dedos]`
-- **Comportamiento del sensor de giro (`ang.b`, `ang.g`):** `[COMPLETAR: ej. las gotas escurren correctamente hacia abajo y hacia los lados al ladear]`
-- **Respuesta a la vibración háptica al soltarse gotas:** `[COMPLETAR: ej. vibra sutilmente en Android / no compatible en iOS Safari]`
-- **Latencia promedio observada:** `[COMPLETAR: ej. ~15 ms en red local / ~70 ms en GitHub Pages]`
